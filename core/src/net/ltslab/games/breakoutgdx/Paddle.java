@@ -36,13 +36,13 @@ public class Paddle extends Actor {
         if (Gdx.input.isKeyPressed(Input.Keys.LEFT)) {
             if (Gdx.input.isKeyPressed(Input.Keys.CONTROL_LEFT))
                 Gdx.app.log("Paddle", "Left");
-            setPosition(getX() + 10, getY());
+            setPosition(getX() - 10, getY());
 
         }
         if (Gdx.input.isKeyPressed(Input.Keys.RIGHT)) {
             if (Gdx.input.isKeyPressed(Input.Keys.CONTROL_LEFT))
                 Gdx.app.log("Paddle", "Right");
-            setPosition(getX() - 10, getY());
+            setPosition(getX() + 10, getY());
         }
     }
 }
