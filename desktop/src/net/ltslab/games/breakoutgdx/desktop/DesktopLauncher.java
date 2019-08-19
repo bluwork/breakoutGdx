@@ -8,8 +8,8 @@ import net.ltslab.games.breakoutgdx.Const;
 public class DesktopLauncher {
     public static void main (String[] args) {
         LwjglApplicationConfiguration config = new LwjglApplicationConfiguration();
-        config.width = 240;
-        config.height = 400;
+        config.width = 450;
+        config.height = 800;
         new LwjglApplication(new BreakoutRLGame(), config);
     }
 }

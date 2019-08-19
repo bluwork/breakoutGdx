@@ -9,10 +9,13 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.physics.box2d.*;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
+import net.ltslab.games.breakoutgdx.helper.BodyData;
 import org.graalvm.compiler.asm.sparc.SPARCAssembler;
 
 import java.util.ArrayList;
@@ -22,28 +25,45 @@ public class PlayerBall extends Actor {
     TextureRegion ballImage;
     private boolean canAct;
     private float speed = 100;
-    private Rectangle rectangle;
     private ArrayList<Brick> bricks;
 
+    private World world;
 
     private Paddle paddle;
 
-    private Vector2 direction = new Vector2();
+    private Body body;
 
-    public PlayerBall (Paddle paddle) {
+    public PlayerBall (Paddle paddle, World world) {
+
         ballImage = new TextureRegion(new Texture(Gdx.files.internal("ball.png")));
-        setBounds(ballImage.getRegionX(), ballImage.getRegionY(), ballImage.getRegionWidth(), ballImage.getRegionHeight());
-        direction.x = 1;
-        direction.y = 1;
-        rectangle = new Rectangle(0, 0, getWidth(), getHeight());
+        setBounds(0, 0, ballImage.getRegionWidth()/Const.SCALE, ballImage.getRegionHeight()/Const.SCALE);
         this.paddle = paddle;
+        this.world = world;
+
+
+    }
+
+    public void createBody(Vector2 position) {
+        BodyDef bodyDef = new BodyDef();
+        bodyDef.type = BodyDef.BodyType.DynamicBody;
+        bodyDef.position.set(position);
+        body = world.createBody(bodyDef);
+        CircleShape circleShape = new CircleShape();
+        circleShape.setRadius(0.3f);
+        FixtureDef fixtureDef = new FixtureDef();
+        fixtureDef.shape = circleShape;
+        fixtureDef.density = 0.5f;
+        fixtureDef.friction = 0.0f;
+        fixtureDef.restitution = 1f;
+        body.createFixture(fixtureDef);
+        BodyData data = new BodyData("Ball", this);
+        body.setUserData(data);
+        circleShape.dispose();
 
     }
 
     @Override
     public void draw(Batch batch, float parentAlpha) {
-        rectangle.x = getX();
-        rectangle.y = getY();
         Color color = getColor();
         batch.setColor(color.r, color.g, color.b, color.a * parentAlpha);
         batch.draw(ballImage, getX(), getY(), getOriginX(), getOriginY(),
@@ -52,6 +72,7 @@ public class PlayerBall extends Actor {
 
     public void start() {
         canAct = true;
+        body.setLinearVelocity(20 , 20);
     }
 
     public void stopAndReset() {
@@ -62,57 +83,23 @@ public class PlayerBall extends Actor {
     public void act(float delta) {
         super.act(delta);
         if (canAct) {
-            move(delta);
+            update(delta);
         }
-
     }
 
     public void setBricks(ArrayList<Brick> bricks) {
         this.bricks = bricks;
     }
 
-    private void move(float delta) {
+    private void update(float delta) {
 
-        checkCollisions();
 
-        if (getX() > Const.CAMERA_WIDTH - getWidth()) {
-            direction.x = -1;
-        }
-        if (getX() < 0) {
-            direction.x = 1;
-        }
-        if (getY() < 0) {
-            direction.y = 1;
-        }
-        if (getY() > Const.CAMERA_HEIGHT - getHeight()) {
-            direction.y = -1;
-        }
-        direction = direction.nor();
-        setPosition(getX() + speed * direction.x * delta, getY() + speed * direction.y * delta);
-    }
+        Vector2 position  = body.getPosition();
 
-    private void checkCollisions() {
-        if (rectangle.overlaps(paddle.rectangle)) {
-            direction.y = 1;
-        }
-//        for (Brick b : bricks) {
-//            if (rectangle.overlaps(b.rectangle)) {
-//                if (!b.inCollision) {
-//                    b.inCollision = true;
-//                    System.out.println("Ball collide with brick");
-//                    bricks.remove(b);
-//
-//                    if (getY() > b.getY()) {
-//                        direction.y = 1;
-//                    } else {
-//                        direction.y = -1;
-//                    }
-//                    b.remove();
-//                    b.inCollision = false;
-//                }
-//
-//            }
-//        }
+        setRotation(body.getAngle()* MathUtils.radiansToDegrees);
+
+        setPosition(position.x - getWidth()/2, position.y - getHeight()/2);
 
     }
+
 }

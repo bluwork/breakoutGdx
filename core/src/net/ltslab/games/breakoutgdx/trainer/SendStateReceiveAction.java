@@ -19,28 +19,34 @@ public class SendStateReceiveAction {
     private Socket client;
     private int port;
     private DataOutputStream dataOutputStream;
+    boolean canSend;
 
     public SendStateReceiveAction() throws IOException {
         this(DEFAULT_PORT);
-
     }
 
-    public SendStateReceiveAction(int port) throws IOException {
+    public SendStateReceiveAction(int port){
 
         pool = Executors.newFixedThreadPool(100);
         this.port = port;
         if (client == null) {
-            client = new Socket("localhost", port);
+            try {
+                client = new Socket("localhost", port);
+                if (client.isConnected()) {
+                    dataOutputStream = new DataOutputStream(client.getOutputStream());
+
+                    pool.execute(new InputHandler(client));
+                    canSend = true;
+                }
+            } catch (IOException e) {
+                canSend = false;
+            }
         }
-        dataOutputStream = new DataOutputStream(client.getOutputStream());
-
-            pool.execute(new SendStateReceiveAction.InputHandler(client));
-
     }
 
     public void sendState(byte[] state) throws IOException {
 
-        if (client.isConnected()) {
+        if (canSend) {
 
             dataOutputStream.writeInt(state.length);
             dataOutputStream.write(state);
