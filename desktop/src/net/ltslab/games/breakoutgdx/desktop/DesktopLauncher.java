@@ -6,10 +6,10 @@ import net.ltslab.games.breakoutgdx.BreakoutRLGame;
 import net.ltslab.games.breakoutgdx.Const;
 
 public class DesktopLauncher {
-	public static void main (String[] arg) {
-		LwjglApplicationConfiguration config = new LwjglApplicationConfiguration();
-		config.width = Const.CAMERA_WIDTH;
-		config.height = Const.CAMERA_HEIGHT;
-		new LwjglApplication(new BreakoutRLGame(), config);
-	}
+    public static void main (String[] args) {
+        LwjglApplicationConfiguration config = new LwjglApplicationConfiguration();
+        config.width = 240;
+        config.height = 400;
+        new LwjglApplication(new BreakoutRLGame(), config);
+    }
 }
