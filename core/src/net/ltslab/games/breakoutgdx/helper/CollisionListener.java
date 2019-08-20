@@ -6,6 +6,7 @@ package net.ltslab.games.breakoutgdx.helper;
 
 import com.badlogic.gdx.physics.box2d.*;
 import com.badlogic.gdx.utils.Array;
+import net.ltslab.games.breakoutgdx.GameManager;
 
 import java.util.ArrayList;
 
@@ -39,6 +40,24 @@ public class CollisionListener implements ContactListener {
     @Override
     public void endContact(Contact contact) {
 
+       if (contact.getFixtureA().isSensor()) {
+           System.out.println(contact.getFixtureB().getBody().getUserData().toString());
+            if (contact.getFixtureB().getBody().getUserData() != null) {
+                BodyData bData = (BodyData) contact.getFixtureB().getBody().getUserData();
+                if (bData.getName().equals("Ball")) {
+                    GameManager.getInstance().gameOver();
+                }
+            }
+        }
+        if (contact.getFixtureB().isSensor()) {
+            System.out.println(contact.getFixtureA().getBody().getUserData().toString());
+            if (contact.getFixtureA().getBody().getUserData() != null) {
+                BodyData aData = (BodyData) contact.getFixtureA().getBody().getUserData();
+                if (aData.getName().equals("Ball")) {
+                    GameManager.getInstance().gameOver();
+                }
+            }
+        }
     }
 
     @Override

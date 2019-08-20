@@ -4,28 +4,13 @@
 
 package net.ltslab.games.breakoutgdx.helper;
 
-import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.math.Vector2;
-import com.badlogic.gdx.physics.box2d.Body;
-import com.badlogic.gdx.physics.box2d.BodyDef;
-import com.badlogic.gdx.physics.box2d.PolygonShape;
-import com.badlogic.gdx.physics.box2d.World;
+import com.badlogic.gdx.physics.box2d.*;
 import net.ltslab.games.breakoutgdx.Const;
 
 public class PhysicsHelper {
 
-//    private PhysicsHelper() {}
-//
-//    private static PhysicsHelper instance;
-//
-//    public static PhysicsHelper instance() {
-//        if (instance == null) {
-//            instance = new PhysicsHelper();
-//        }
-//        return instance;
-//    }
-
-    private  static float accumulator;
+    private static float accumulator;
 
     public static void updatePhysicsStep(World world, float delta) {
 
@@ -45,45 +30,55 @@ public class PhysicsHelper {
         createCage(Side.E, world);
     }
 
-    private  static void createCage(Side side, World world) {
+    private static void createCage(Side side, World world) {
         BodyDef bodyDefinition = new BodyDef();
         Vector2 position = new Vector2();
         PolygonShape box = new PolygonShape();
+
+        FixtureDef fixtureDef = new FixtureDef();
+        fixtureDef.density = 0.0f;
 
         switch (side) {
             case N:
                 position.y = Const.CAMERA_HEIGHT;
                 position.x = Const.CAMERA_WIDTH / 2;
-                box.setAsBox(Const.CAMERA_WIDTH/2, .1f);
+                box.setAsBox(Const.CAMERA_WIDTH / 2, .1f);
                 break;
             case S:
-                position.y = 0;
+                position.y = 0f;
                 position.x = Const.CAMERA_WIDTH / 2;
-                box.setAsBox(Const.CAMERA_WIDTH/2, .1f);
+                box.setAsBox(Const.CAMERA_WIDTH / 2, .1f);
+                //fixtureDef.isSensor = true;
 
                 break;
             case W:
                 position.y = Const.CAMERA_HEIGHT / 2;
                 position.x = 0;
-                box.setAsBox(.1f, Const.CAMERA_HEIGHT/2);
+                box.setAsBox(.1f, Const.CAMERA_HEIGHT / 2);
 
                 break;
             case E:
                 position.y = Const.CAMERA_HEIGHT / 2;
                 position.x = Const.CAMERA_WIDTH;
-                box.setAsBox(.1f, Const.CAMERA_HEIGHT/2);
+                box.setAsBox(.1f, Const.CAMERA_HEIGHT / 2);
                 break;
         }
+
         bodyDefinition.position.set(position);
+
         Body body = world.createBody(bodyDefinition);
-        body.createFixture(box, 0.0f);
+
+        fixtureDef.shape = box;
+
+        body.createFixture(fixtureDef);
+
         box.dispose();
 
 
     }
 
-   public enum Side {
+    public enum Side {
         N, S, W, E
-   }
+    }
 }
 

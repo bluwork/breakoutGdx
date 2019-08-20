@@ -21,6 +21,7 @@ public class Paddle extends Actor {
     TextureRegion image;
     private Body body;
     private World world;
+    private Vector2 initialPosition;
 
     public Paddle(World world) {
         image = new TextureRegion(new Texture(Gdx.files.internal("paddle.png")));
@@ -29,6 +30,7 @@ public class Paddle extends Actor {
     }
 
     public void createBody(Vector2 position) {
+        initialPosition = position;
         BodyDef bodyDef = new BodyDef();
         bodyDef.type = BodyDef.BodyType.KinematicBody;
         bodyDef.position.set(position);
@@ -85,5 +87,9 @@ public class Paddle extends Actor {
 
         setPosition(position.x - getWidth() / 2, position.y - getHeight() / 2);
 
+    }
+    public void stopAndReset() {
+        //body.setTransform(initialPosition, body.getAngle());
+        update();
     }
 }

@@ -6,21 +6,19 @@ package net.ltslab.games.breakoutgdx;
 
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.files.FileHandle;
-import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.GL20;
-import com.badlogic.gdx.graphics.Pixmap;
-import com.badlogic.gdx.graphics.PixmapIO;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.math.Vector2;
-import com.badlogic.gdx.physics.box2d.*;
-import com.badlogic.gdx.scenes.scene2d.Group;
+import com.badlogic.gdx.physics.box2d.Body;
+import com.badlogic.gdx.physics.box2d.Box2D;
+import com.badlogic.gdx.physics.box2d.Box2DDebugRenderer;
+import com.badlogic.gdx.physics.box2d.World;
 import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.scenes.scene2d.ui.Label;
+import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.utils.Array;
-import com.badlogic.gdx.utils.BufferUtils;
-import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
-import com.badlogic.gdx.utils.viewport.ScalingViewport;
-import com.badlogic.gdx.utils.viewport.StretchViewport;
 import net.ltslab.games.breakoutgdx.helper.CollisionListener;
 import net.ltslab.games.breakoutgdx.helper.PhysicsHelper;
 import net.ltslab.games.breakoutgdx.trainer.SendStateReceiveAction;
@@ -30,165 +28,186 @@ import java.util.ArrayList;
 
 public class BreakoutRLGame extends ApplicationAdapter {
 
-	private Stage stage;
-	private int skipFrames;
-	private int totalSend;
-	private SendStateReceiveAction sendStateReceiveAction;
-	private boolean stopSending;
-	private PlayerBall ball;
-	private int brickColumns = 6;
-	private int brickRows = 5;
+    private Stage stage;
+    private Stage hudStage;
 
-	private ArrayList<Brick> bricks;
+    // Training elements
+    private SendStateReceiveAction sendStateReceiveAction;
+    private boolean training = true;
 
-	Box2DDebugRenderer debugRenderer;
+    // Level elements
+    private PlayerBall ball;
+    private Paddle paddle;
+    private int brickColumns = 6;
+    private int brickRows = 5;
+    private Array<Brick> bricks;
 
-	public World world;
+    // Physics elements
+    Box2DDebugRenderer debugRenderer;
 
-	private Array<Body> removedBodies;
+    public World world;
+    private Array<Body> removedBodies;
+    private boolean physics;
+    private boolean renderPhysics = true;
 
-	@Override
-	public void create () {
+    // UI elements
+    Label scoreText;
 
-		Box2D.init();
+    @Override
+    public void create() {
 
-		removedBodies = new Array<>();
+        initialize();
 
-		debugRenderer= new Box2DDebugRenderer();
-		world  = new World(new Vector2(0, 0), false);
-		world.setContactListener(new CollisionListener(removedBodies));
+        PhysicsHelper.createWorldBorders(world);
 
-		bricks = new ArrayList<>();
+        addBricks();
 
-		stage = new Stage(new ExtendViewport(Const.CAMERA_WIDTH , Const.CAMERA_HEIGHT));
+        paddle = new Paddle(world);
+        paddle.createBody(new Vector2(Const.CAMERA_WIDTH / 2 - (paddle.getWidth() / 2) / Const.SCALE, paddle.getHeight() / 2));
+        stage.addActor(paddle);
 
-		addBricks();
+        ball = new PlayerBall(paddle, world);
+        ball.createBody(new Vector2(Const.CAMERA_WIDTH / 2 - (ball.getWidth() / 2) / Const.SCALE, paddle.getHeight() + ball.getHeight() / 2));
+        stage.addActor(ball);
 
-		Paddle paddle = new Paddle(world);
-		paddle.createBody(new Vector2(Const.CAMERA_WIDTH/2 - (paddle.getWidth()/2)/Const.SCALE, 0));
+        Label.LabelStyle labelStyle = new Label.LabelStyle();
+        labelStyle.font = new BitmapFont();
+        scoreText = new Label("0", labelStyle);
+        Table table = new Table();
+        table.setFillParent(true);
+        table.add(scoreText);
 
-
-		stage.addActor(paddle);
-
-		ball = new PlayerBall(paddle, world);
-		ball.createBody(new Vector2(Const.CAMERA_WIDTH/2 - ball.getWidth()/2, paddle.getHeight()));
-
-		stage.addActor(ball);
-
-		try {
-			sendStateReceiveAction = new SendStateReceiveAction();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-
-		ball.setBricks(bricks);
-
-		PhysicsHelper.createWorldBorders(world);
-
-		start();
-
-	}
-
-
-
-	@Override
-	public void render () {
-
-
-		Gdx.gl.glClearColor(1, 0, 0, 1);
-		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-		stage.act();
-		stage.draw();
-		if (skipFrames >= 4) {
-			if (!stopSending) {
-				takeScreenShot();
-			}
-			skipFrames = 0;
-		} else {
-			skipFrames++;
-		}
-
-		if (removedBodies.size > 0) {
-			clearBodies();
-		}
-
-		PhysicsHelper.updatePhysicsStep(world, Gdx.graphics.getDeltaTime());
-
-//		stage.getBatch().begin();
-//		debugRenderer.render(world, stage.getCamera().combined);
-//		stage.getBatch().end();
-
-	}
-
-	private void clearBodies() {
-		for (Body b : removedBodies) {
-			if (!world.isLocked()) {
-				removedBodies.removeValue(b, true);
-				world.destroyBody(b);
-			}
-		}
-	}
-
-	
-	@Override
-	public void dispose () {
-		stage.dispose();
-	}
-
-	private void takeScreenShot() {
-		totalSend ++;
-		if (totalSend > 15) {
-			stopSending = true;
-			try {
-				sendStateReceiveAction.stop();
-				System.out.println("Stop sending.");
-				return;
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		}
-		byte [] pixels = ScreenUtils.getFrameBufferPixels(true);
-
-		// this loop makes sure the whole screenshot is opaque and looks exactly like what the user is seeing
-		for(int i = 4; i < pixels.length; i += 4) {
-			pixels[i - 1] = (byte) 255;
-		}
+        hudStage.addActor(table);
 
         try {
-            sendStateReceiveAction.sendState(pixels);
-            System.out.println("State was send.");
+            sendStateReceiveAction = new SendStateReceiveAction();
         } catch (IOException e) {
             e.printStackTrace();
         }
 
-        System.out.println("Pixels size: " + pixels.length);
+    }
 
-		Pixmap pixmap = new Pixmap(Gdx.graphics.getBackBufferWidth(), Gdx.graphics.getBackBufferHeight(), Pixmap.Format.RGBA8888);
-		BufferUtils.copy(pixels, 0, pixmap.getPixels(), pixels.length);
-		PixmapIO.writePNG(new FileHandle(Gdx.files.getLocalStoragePath() + "mypixmap.png"), pixmap);
-		pixmap.dispose();
+    private void initialize() {
+
+        GameManager.getInstance().setGame(this);
+
+        // Initialize physics
+        Box2D.init();
+
+        removedBodies = new Array<>();
+
+        world = new World(new Vector2(0, 0), false);
+        world.setContactListener(new CollisionListener(removedBodies));
+
+        debugRenderer = new Box2DDebugRenderer();
+
+        // Initialize stages - one for game and one for HUD - UI elements
+        stage = new Stage(new ExtendViewport(Const.CAMERA_WIDTH, Const.CAMERA_HEIGHT));
+        hudStage = new Stage(new ExtendViewport(Const.CAMERA_WIDTH * Const.SCALE, Const.CAMERA_HEIGHT * Const.SCALE));
+
+    }
+
+    private boolean started;
+
+    @Override
+    public void render() {
+
+        if (!started && Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
+            start();
+        }
+
+        Gdx.gl.glClearColor(1, 0, 0, 1);
+        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+        stage.act();
+        stage.draw();
+        if (training && started) {
+            sendStateReceiveAction.update();
+        }
+        hudStage.act();
+        hudStage.draw();
+
+        if (removedBodies.size > 0) {
+            clearBodies();
+        }
+
+        if (physics) {
+            PhysicsHelper.updatePhysicsStep(world, Gdx.graphics.getDeltaTime());
+        }
+
+        if (renderPhysics) {
+            stage.getBatch().begin();
+            debugRenderer.render(world, stage.getCamera().combined);
+            stage.getBatch().end();
+        }
+    }
+
+    private static final int BRICK_VALUE = 60;
+
+    private void clearBodies() {
+
+        if (!world.isLocked()) {
+            for (Body b : removedBodies) {
+                if (!world.isLocked()) {
+                    removedBodies.removeValue(b, true);
+                    world.destroyBody(b);
+                    updateScore(BRICK_VALUE);
+                }
+            }
+        }
+    }
+
+    private void updateScore(int amount) {
+        score += amount;
+        scoreText.setText(score);
+    }
+
+    @Override
+    public void dispose() {
+        stage.dispose();
+    }
 
 
+    public void start() {
+        started = true;
+        physics = true;
+        ball.start();
+    }
 
-	}
+    private static final float HEIGHT_OFFSET = Const.CAMERA_HEIGHT * .6f;
 
-	public void start() {
-		ball.start();
-	}
+    private void addBricks() {
+        if (bricks == null) {
+            bricks = new Array<>();
+        }
+        for (int i = 0; i < brickRows; i++) {
+            for (int j = 0; j < brickColumns; j++) {
+                Brick brick = new Brick(world);
+                bricks.add(brick);
+                brick.createBody(new Vector2(i * (Const.CAMERA_WIDTH * 3 / 4) / brickColumns + brick.getWidth() / 2, j * (Const.CAMERA_HEIGHT / 3) / brickRows - brick.getHeight() / 2 + HEIGHT_OFFSET));
+                stage.addActor(brick);
+            }
+        }
+    }
 
-	private static final float HEIGHT_OFFSET = Const.CAMERA_HEIGHT * .6f;
+    private int score;
 
 
-	private void addBricks() {
-		for (int i = 0; i < brickRows; i++) {
-			for (int j = 0; j < brickColumns; j++) {
-				Brick brick = new Brick(world);
-				bricks.add(brick);
-				brick.createBody(new Vector2(i * (Const.CAMERA_WIDTH * 3/4)/brickColumns + brick.getWidth()/2  , j * (Const.CAMERA_HEIGHT/3)/brickRows - brick.getHeight()/2+ HEIGHT_OFFSET));
-				stage.addActor(brick);
+    public void onGameOver() {
+        //showWinLose();
+        physics = false;
+        started = false;
+        ball.stopAndReset();
+        paddle.stopAndReset();
+        //uploadAndResetScore();
+        score = 0;
+    }
 
-			}
-		}
-	}
+    private void showWinLose() {
+        throw (new UnsupportedOperationException("Implement Win Lose method"));
+    }
+
+    private void uploadAndResetScore() {
+        throw (new UnsupportedOperationException("Implement Upload And Reset method"));
+    }
 
 }

@@ -15,6 +15,7 @@ import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.*;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
+import com.badlogic.gdx.utils.Array;
 import net.ltslab.games.breakoutgdx.helper.BodyData;
 import org.graalvm.compiler.asm.sparc.SPARCAssembler;
 
@@ -25,13 +26,14 @@ public class PlayerBall extends Actor {
     TextureRegion ballImage;
     private boolean canAct;
     private float speed = 100;
-    private ArrayList<Brick> bricks;
 
     private World world;
 
     private Paddle paddle;
 
     private Body body;
+
+    private Vector2 initialPosition;
 
     public PlayerBall (Paddle paddle, World world) {
 
@@ -44,6 +46,7 @@ public class PlayerBall extends Actor {
     }
 
     public void createBody(Vector2 position) {
+        initialPosition = position;
         BodyDef bodyDef = new BodyDef();
         bodyDef.type = BodyDef.BodyType.DynamicBody;
         bodyDef.position.set(position);
@@ -59,6 +62,7 @@ public class PlayerBall extends Actor {
         BodyData data = new BodyData("Ball", this);
         body.setUserData(data);
         circleShape.dispose();
+        update();
 
     }
 
@@ -72,26 +76,24 @@ public class PlayerBall extends Actor {
 
     public void start() {
         canAct = true;
-        body.setLinearVelocity(20 , 20);
+        body.setLinearVelocity(5 , 5);
     }
 
     public void stopAndReset() {
         canAct = false;
+        //body.setTransform(initialPosition, body.getAngle());
+        update();
     }
 
     @Override
     public void act(float delta) {
         super.act(delta);
         if (canAct) {
-            update(delta);
+            update();
         }
     }
 
-    public void setBricks(ArrayList<Brick> bricks) {
-        this.bricks = bricks;
-    }
-
-    private void update(float delta) {
+    private void update() {
 
 
         Vector2 position  = body.getPosition();
@@ -101,5 +103,6 @@ public class PlayerBall extends Actor {
         setPosition(position.x - getWidth()/2, position.y - getHeight()/2);
 
     }
+
 
 }
