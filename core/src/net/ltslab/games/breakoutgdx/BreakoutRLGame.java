@@ -19,12 +19,12 @@ import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
+import net.ltslab.games.breakoutgdx.helper.BodyData;
 import net.ltslab.games.breakoutgdx.helper.CollisionListener;
 import net.ltslab.games.breakoutgdx.helper.PhysicsHelper;
 import net.ltslab.games.breakoutgdx.trainer.SendStateReceiveAction;
 
 import java.io.IOException;
-import java.util.ArrayList;
 
 public class BreakoutRLGame extends ApplicationAdapter {
 
@@ -35,19 +35,13 @@ public class BreakoutRLGame extends ApplicationAdapter {
     private SendStateReceiveAction sendStateReceiveAction;
     private boolean training = true;
 
-    // Level elements
-    private PlayerBall ball;
-    private Paddle paddle;
-    private int brickColumns = 6;
-    private int brickRows = 5;
-    private Array<Brick> bricks;
+    private GameState gameState = GameState.WAITING;
 
     // Physics elements
     Box2DDebugRenderer debugRenderer;
 
     public World world;
     private Array<Body> removedBodies;
-    private boolean physics;
     private boolean renderPhysics = true;
 
     // UI elements
@@ -58,17 +52,7 @@ public class BreakoutRLGame extends ApplicationAdapter {
 
         initialize();
 
-        PhysicsHelper.createWorldBorders(world);
-
-        addBricks();
-
-        paddle = new Paddle(world);
-        paddle.createBody(new Vector2(Const.CAMERA_WIDTH / 2 - (paddle.getWidth() / 2) / Const.SCALE, paddle.getHeight() / 2));
-        stage.addActor(paddle);
-
-        ball = new PlayerBall(paddle, world);
-        ball.createBody(new Vector2(Const.CAMERA_WIDTH / 2 - (ball.getWidth() / 2) / Const.SCALE, paddle.getHeight() + ball.getHeight() / 2));
-        stage.addActor(ball);
+        level = new Level(world, stage);
 
         Label.LabelStyle labelStyle = new Label.LabelStyle();
         labelStyle.font = new BitmapFont();
@@ -97,7 +81,7 @@ public class BreakoutRLGame extends ApplicationAdapter {
         removedBodies = new Array<>();
 
         world = new World(new Vector2(0, 0), false);
-        world.setContactListener(new CollisionListener(removedBodies));
+        world.setContactListener(new CollisionListener());
 
         debugRenderer = new Box2DDebugRenderer();
 
@@ -112,17 +96,10 @@ public class BreakoutRLGame extends ApplicationAdapter {
     @Override
     public void render() {
 
-        if (!started && Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
-            start();
-        }
-
         Gdx.gl.glClearColor(1, 0, 0, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
         stage.act();
         stage.draw();
-        if (training && started) {
-            sendStateReceiveAction.update();
-        }
         hudStage.act();
         hudStage.draw();
 
@@ -130,18 +107,33 @@ public class BreakoutRLGame extends ApplicationAdapter {
             clearBodies();
         }
 
-        if (physics) {
-            PhysicsHelper.updatePhysicsStep(world, Gdx.graphics.getDeltaTime());
+        if (gameState == GameState.WAITING) {
+
+            if (!started && Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
+                gameState = GameState.PLAYING;
+                start();
+            }
         }
 
-        if (renderPhysics) {
-            stage.getBatch().begin();
-            debugRenderer.render(world, stage.getCamera().combined);
-            stage.getBatch().end();
+        if (gameState == GameState.PLAYING) {
+
+            if (training && started) {
+                sendStateReceiveAction.update();
+            }
+
+            PhysicsHelper.updatePhysicsStep(world, Gdx.graphics.getDeltaTime());
+
+            if (renderPhysics) {
+                stage.getBatch().begin();
+                debugRenderer.render(world, stage.getCamera().combined);
+                stage.getBatch().end();
+            }
+        } else if (gameState == GameState.RESETING) {
+            resetGame();
         }
+
     }
 
-    private static final int BRICK_VALUE = 60;
 
     private void clearBodies() {
 
@@ -149,14 +141,25 @@ public class BreakoutRLGame extends ApplicationAdapter {
             for (Body b : removedBodies) {
                 if (!world.isLocked()) {
                     removedBodies.removeValue(b, true);
+                    if (b.getUserData() != null) {
+                        BodyData data = (BodyData) b.getUserData();
+                        if (data.getActor() != null) {
+                            if (data.getName().equals("Brick")) {
+                                Brick br = (Brick) data.getActor();
+                                if (br.hasHolder()) {
+                                    br.getHolder().removeValue(br, true);
+                                }
+                            }
+                            data.getActor().remove();
+                        }
+                    }
                     world.destroyBody(b);
-                    updateScore(BRICK_VALUE);
                 }
             }
         }
     }
 
-    private void updateScore(int amount) {
+    public void updateScore(int amount) {
         score += amount;
         scoreText.setText(score);
     }
@@ -164,42 +167,42 @@ public class BreakoutRLGame extends ApplicationAdapter {
     @Override
     public void dispose() {
         stage.dispose();
+        hudStage.dispose();
+        world.dispose();
     }
 
 
     public void start() {
         started = true;
-        physics = true;
-        ball.start();
+
+        level.start();
+
     }
 
-    private static final float HEIGHT_OFFSET = Const.CAMERA_HEIGHT * .6f;
-
-    private void addBricks() {
-        if (bricks == null) {
-            bricks = new Array<>();
-        }
-        for (int i = 0; i < brickRows; i++) {
-            for (int j = 0; j < brickColumns; j++) {
-                Brick brick = new Brick(world);
-                bricks.add(brick);
-                brick.createBody(new Vector2(i * (Const.CAMERA_WIDTH * 3 / 4) / brickColumns + brick.getWidth() / 2, j * (Const.CAMERA_HEIGHT / 3) / brickRows - brick.getHeight() / 2 + HEIGHT_OFFSET));
-                stage.addActor(brick);
-            }
-        }
-    }
 
     private int score;
+    private Level level;
 
 
     public void onGameOver() {
-        //showWinLose();
-        physics = false;
+        gameState = GameState.RESETING;
+    }
+
+    private void resetGame() {
         started = false;
-        ball.stopAndReset();
-        paddle.stopAndReset();
+        System.out.println("World is " + (world.isLocked() ? "locked" : "not locked") + ".");
+
+        if (!training) {
+            //showWinLose();
+        }
+
+        started = false;
+        level.reset();
         //uploadAndResetScore();
         score = 0;
+        scoreText.setText(score);
+
+        gameState = GameState.WAITING;
     }
 
     private void showWinLose() {
@@ -210,4 +213,13 @@ public class BreakoutRLGame extends ApplicationAdapter {
         throw (new UnsupportedOperationException("Implement Upload And Reset method"));
     }
 
+    public Array<Body> getRemovedBodies() {
+        return removedBodies;
+    }
+
+    public enum GameState {
+        PLAYING,
+        RESETING,
+        WAITING
+    }
 }

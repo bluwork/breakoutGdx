@@ -12,16 +12,18 @@ public class PhysicsHelper {
 
     private static float accumulator;
 
+
     public static void updatePhysicsStep(World world, float delta) {
 
-        float frameTime = Math.min(delta, 0.25f);
-        accumulator += frameTime;
-        while (accumulator >= Const.TIME_STEP) {
-            world.step(Const.TIME_STEP, Const.VELOCITY_ITERATIONS, Const.POSITION_ITERATIONS);
+            float frameTime = Math.min(delta, 0.25f);
+            accumulator += frameTime;
+            while (accumulator >= Const.TIME_STEP) {
+                world.step(Const.TIME_STEP, Const.VELOCITY_ITERATIONS, Const.POSITION_ITERATIONS);
 
-            accumulator -= Const.TIME_STEP;
+                accumulator -= Const.TIME_STEP;
+            }
         }
-    }
+
 
     public static void createWorldBorders(World world) {
         createCage(Side.N, world);
@@ -48,7 +50,7 @@ public class PhysicsHelper {
                 position.y = 0f;
                 position.x = Const.CAMERA_WIDTH / 2;
                 box.setAsBox(Const.CAMERA_WIDTH / 2, .1f);
-                //fixtureDef.isSensor = true;
+                fixtureDef.isSensor = true;
 
                 break;
             case W:

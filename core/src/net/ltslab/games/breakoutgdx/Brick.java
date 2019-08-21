@@ -14,7 +14,10 @@ import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.*;
 import com.badlogic.gdx.scenes.scene2d.Actor;
+import com.badlogic.gdx.utils.Array;
 import net.ltslab.games.breakoutgdx.helper.BodyData;
+
+import java.util.ArrayList;
 
 public class Brick extends Actor {
 
@@ -23,6 +26,9 @@ public class Brick extends Actor {
     public boolean inCollision;
     private Body body;
     private World world;
+
+    private Array<Brick> holder;
+
 
     public Brick (World world) {
         image = new TextureRegion(new Texture(Gdx.files.internal("brick.png")));
@@ -76,6 +82,22 @@ public class Brick extends Actor {
 
         setPosition(position.x - getWidth() / 2, position.y - getHeight() / 2);
 
+    }
+
+    public void setHolder(Array<Brick> holder) {
+        this.holder = holder;
+    }
+
+    public Array<Brick> getHolder() {
+        return holder;
+    }
+
+    public boolean hasHolder() {
+        return holder != null && holder.contains(this, true);
+    }
+
+    public Body getBody() {
+        return body;
     }
 
 }

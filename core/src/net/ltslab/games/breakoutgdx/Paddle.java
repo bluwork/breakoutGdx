@@ -89,7 +89,7 @@ public class Paddle extends Actor {
 
     }
     public void stopAndReset() {
-        //body.setTransform(initialPosition, body.getAngle());
+        body.setTransform(initialPosition, body.getAngle());
         update();
     }
 }

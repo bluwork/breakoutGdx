@@ -21,7 +21,7 @@ import org.graalvm.compiler.asm.sparc.SPARCAssembler;
 
 import java.util.ArrayList;
 
-public class PlayerBall extends Actor {
+public class Ball extends Actor {
 
     TextureRegion ballImage;
     private boolean canAct;
@@ -35,14 +35,12 @@ public class PlayerBall extends Actor {
 
     private Vector2 initialPosition;
 
-    public PlayerBall (Paddle paddle, World world) {
+    public Ball(Paddle paddle, World world) {
 
         ballImage = new TextureRegion(new Texture(Gdx.files.internal("ball.png")));
         setBounds(0, 0, ballImage.getRegionWidth()/Const.SCALE, ballImage.getRegionHeight()/Const.SCALE);
         this.paddle = paddle;
         this.world = world;
-
-
     }
 
     public void createBody(Vector2 position) {
@@ -81,7 +79,9 @@ public class PlayerBall extends Actor {
 
     public void stopAndReset() {
         canAct = false;
-        //body.setTransform(initialPosition, body.getAngle());
+        body.setLinearVelocity(0 , 0);
+        body.setTransform(initialPosition, body.getAngle());
+
         update();
     }
 
@@ -94,7 +94,6 @@ public class PlayerBall extends Actor {
     }
 
     private void update() {
-
 
         Vector2 position  = body.getPosition();
 

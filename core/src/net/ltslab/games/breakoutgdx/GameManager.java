@@ -4,6 +4,8 @@
 
 package net.ltslab.games.breakoutgdx;
 
+import com.badlogic.gdx.physics.box2d.Body;
+
 public class GameManager {
 
     private BreakoutRLGame game;
@@ -34,6 +36,10 @@ public class GameManager {
     }
 
     public void updateScore(int amount) {
+        getGame().updateScore(amount);
+    }
 
+    public void removeBody(Body body) {
+        getGame().getRemovedBodies().add(body);
     }
 }

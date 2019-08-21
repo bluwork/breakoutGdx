@@ -98,12 +98,12 @@ public class SendStateReceiveAction {
 
         try {
             sendState(pixels);
-            System.out.println("State was send.");
+            //System.out.println("State was send.");
         } catch (IOException e) {
             e.printStackTrace();
         }
 
-        System.out.println("Pixels size: " + pixels.length);
+        //System.out.println("Pixels size: " + pixels.length);
 
 //        Pixmap pixmap = new Pixmap(Gdx.graphics.getBackBufferWidth(), Gdx.graphics.getBackBufferHeight(), Pixmap.Format.RGBA8888);
 //        BufferUtils.copy(pixels, 0, pixmap.getPixels(), pixels.length);
