@@ -23,7 +23,7 @@ public class SendStateReceiveAction {
     boolean canSend;
 
     private int skipFrames;
-    private int totalSend;
+    //private int totalSend;
     private boolean stopSending;
 
     public SendStateReceiveAction() throws IOException {
@@ -78,17 +78,17 @@ public class SendStateReceiveAction {
     }
 
     private void takeScreenShot() {
-        totalSend++;
-        if (totalSend > 500) {
-            stopSending = true;
-            try {
-                stop();
-                System.out.println("Stop sending.");
-                return;
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
+//        totalSend++;
+//        if (totalSend > 500) {
+//            stopSending = true;
+//            try {
+//                stop();
+//                System.out.println("Stop sending.");
+//                return;
+//            } catch (Exception e) {
+//                e.printStackTrace();
+//            }
+//        }
         byte[] pixels = ScreenUtils.getFrameBufferPixels(true);
 
         // this loop makes sure the whole screenshot is opaque and looks exactly like what the user is seeing
@@ -109,7 +109,6 @@ public class SendStateReceiveAction {
 //        BufferUtils.copy(pixels, 0, pixmap.getPixels(), pixels.length);
 //        PixmapIO.writePNG(new FileHandle(Gdx.files.getLocalStoragePath() + "mypixmap.png"), pixmap);
 //        pixmap.dispose();
-
 
     }
 
