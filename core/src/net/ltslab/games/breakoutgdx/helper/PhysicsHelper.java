@@ -6,7 +6,7 @@ package net.ltslab.games.breakoutgdx.helper;
 
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.*;
-import net.ltslab.games.breakoutgdx.Const;
+import net.ltslab.games.breakoutgdx.util.Const;
 
 public class PhysicsHelper {
 

@@ -5,8 +5,9 @@
 package net.ltslab.games.breakoutgdx.helper;
 
 import com.badlogic.gdx.physics.box2d.*;
-import net.ltslab.games.breakoutgdx.Const;
-import net.ltslab.games.breakoutgdx.GameManager;
+import net.ltslab.games.breakoutgdx.util.Const;
+import net.ltslab.games.breakoutgdx.management.GameManager;
+import net.ltslab.games.breakoutgdx.util.GameUtils;
 
 public class CollisionListener implements ContactListener {
 
@@ -37,8 +38,8 @@ public class CollisionListener implements ContactListener {
             if (contact.getFixtureB().getBody().getUserData() != null) {
                 BodyData bData = (BodyData) contact.getFixtureB().getBody().getUserData();
                 if (bData.getName().equals("Ball")) {
-                    System.out.println("Ball is out. Calling a game over.");
-                    GameManager.getInstance().gameOver();
+                    //GameUtils.print("CollisionListener", "Ball is out. Calling a game over.");
+                    GameManager.getInstance().gameOver(false);
 
                 }
             }
@@ -47,8 +48,8 @@ public class CollisionListener implements ContactListener {
             if (contact.getFixtureA().getBody().getUserData() != null) {
                 BodyData aData = (BodyData) contact.getFixtureA().getBody().getUserData();
                 if (aData.getName().equals("Ball")) {
-                    System.out.println("Ball is out. Calling a game over.");
-                    GameManager.getInstance().gameOver();
+                    //GameUtils.print("CollisionListener", "Ball is out. Calling a game over.");
+                    GameManager.getInstance().gameOver(false);
                 }
             }
         }

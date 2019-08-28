@@ -2,7 +2,7 @@
  * Copyright (c) 2019. BLoo
  */
 
-package net.ltslab.games.breakoutgdx;
+package net.ltslab.games.breakoutgdx.actor;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
@@ -10,14 +10,12 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.MathUtils;
-import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.*;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.utils.Array;
 import net.ltslab.games.breakoutgdx.helper.BodyData;
-
-import java.util.ArrayList;
+import net.ltslab.games.breakoutgdx.util.Const;
 
 public class Brick extends Actor {
 
@@ -32,7 +30,7 @@ public class Brick extends Actor {
 
     public Brick (World world) {
         image = new TextureRegion(new Texture(Gdx.files.internal("brick.png")));
-        setBounds(0, 0, image.getRegionWidth()/Const.SCALE, image.getRegionHeight()/Const.SCALE);
+        setBounds(0, 0, image.getRegionWidth()/ Const.SCALE, image.getRegionHeight()/Const.SCALE);
         setDestroyed(false);
         this.world = world;
     }

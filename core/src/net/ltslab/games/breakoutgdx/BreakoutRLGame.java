@@ -17,12 +17,17 @@ import com.badlogic.gdx.physics.box2d.World;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
+import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
+import net.ltslab.games.breakoutgdx.actor.Brick;
 import net.ltslab.games.breakoutgdx.helper.BodyData;
 import net.ltslab.games.breakoutgdx.helper.CollisionListener;
 import net.ltslab.games.breakoutgdx.helper.PhysicsHelper;
-import net.ltslab.games.breakoutgdx.trainer.SendStateReceiveAction;
+import net.ltslab.games.breakoutgdx.management.GameManager;
+import net.ltslab.games.breakoutgdx.trainer.Communicator;
+import net.ltslab.games.breakoutgdx.util.Const;
+import net.ltslab.games.breakoutgdx.util.GrayscaleShader;
 
 import java.io.IOException;
 
@@ -32,7 +37,7 @@ public class BreakoutRLGame extends ApplicationAdapter {
     private Stage hudStage;
 
     // Training elements
-    private SendStateReceiveAction sendStateReceiveAction;
+    private Communicator communicator;
     private boolean training = true;
 
     private GameState gameState = GameState.WAITING;
@@ -57,6 +62,7 @@ public class BreakoutRLGame extends ApplicationAdapter {
         Label.LabelStyle labelStyle = new Label.LabelStyle();
         labelStyle.font = new BitmapFont();
         scoreText = new Label("0", labelStyle);
+        scoreText.setAlignment(Align.top);
         Table table = new Table();
         table.setFillParent(true);
         table.add(scoreText);
@@ -64,7 +70,7 @@ public class BreakoutRLGame extends ApplicationAdapter {
         hudStage.addActor(table);
 
         try {
-            sendStateReceiveAction = new SendStateReceiveAction();
+            communicator = new Communicator();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -87,6 +93,7 @@ public class BreakoutRLGame extends ApplicationAdapter {
 
         // Initialize stages - one for game and one for HUD - UI elements
         stage = new Stage(new ExtendViewport(Const.CAMERA_WIDTH, Const.CAMERA_HEIGHT));
+        stage.getBatch().setShader(GrayscaleShader.grayscaleShader);
         hudStage = new Stage(new ExtendViewport(Const.CAMERA_WIDTH * Const.SCALE, Const.CAMERA_HEIGHT * Const.SCALE));
 
     }
@@ -96,7 +103,7 @@ public class BreakoutRLGame extends ApplicationAdapter {
     @Override
     public void render() {
 
-        Gdx.gl.glClearColor(1, 0, 0, 1);
+        Gdx.gl.glClearColor(.5f, .5f, .5f, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
         stage.act();
         stage.draw();
@@ -107,8 +114,12 @@ public class BreakoutRLGame extends ApplicationAdapter {
             clearBodies();
         }
 
+
         if (gameState == GameState.WAITING) {
 
+            if (communicator.needMoreTime()) {
+                communicator.update();
+            }
             if (!started && Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
                 gameState = GameState.PLAYING;
                 start();
@@ -117,8 +128,8 @@ public class BreakoutRLGame extends ApplicationAdapter {
 
         if (gameState == GameState.PLAYING) {
 
-            if (training && started) {
-                sendStateReceiveAction.update();
+            if (training) {
+                communicator.update();
             }
 
             PhysicsHelper.updatePhysicsStep(world, Gdx.graphics.getDeltaTime());
@@ -128,8 +139,8 @@ public class BreakoutRLGame extends ApplicationAdapter {
                 debugRenderer.render(world, stage.getCamera().combined);
                 stage.getBatch().end();
             }
-        } else if (gameState == GameState.RESETING) {
-            resetGame();
+        } else if (gameState == GameState.RESETTING) {
+                resetGame();
         }
 
     }
@@ -162,6 +173,7 @@ public class BreakoutRLGame extends ApplicationAdapter {
     public void updateScore(int amount) {
         score += amount;
         scoreText.setText(score);
+        communicator.setReward(score);
     }
 
     @Override
@@ -174,8 +186,10 @@ public class BreakoutRLGame extends ApplicationAdapter {
 
     public void start() {
         started = true;
-
+        communicator.setDone(false);
+        communicator.setReward(0);
         level.start();
+
 
     }
 
@@ -183,10 +197,18 @@ public class BreakoutRLGame extends ApplicationAdapter {
     private int score;
     private Level level;
 
+    public void onGameOver(boolean win) {
+        communicator.setDone(true);
+        if (win) {
+            communicator.addToReward(score);
+        } else {
+            communicator.addToReward(-100);
+        }
+        communicator.update();
+        gameState = GameState.RESETTING;
 
-    public void onGameOver() {
-        gameState = GameState.RESETING;
     }
+
 
     private void resetGame() {
         started = false;
@@ -203,6 +225,13 @@ public class BreakoutRLGame extends ApplicationAdapter {
         scoreText.setText(score);
 
         gameState = GameState.WAITING;
+//        try {
+//            Thread.sleep(1000);
+//            gameState = GameState.PLAYING;
+//            start();
+//        } catch (InterruptedException e) {
+//            e.printStackTrace();
+//        }
     }
 
     private void showWinLose() {
@@ -219,7 +248,7 @@ public class BreakoutRLGame extends ApplicationAdapter {
 
     public enum GameState {
         PLAYING,
-        RESETING,
-        WAITING
+        RESETTING,
+        WAITING,
     }
 }
