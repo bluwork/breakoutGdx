@@ -21,15 +21,15 @@ public class Level {
     private Stage stage;
     private Paddle paddle;
     private Ball ball;
+    private boolean handleInput;
 
     private Array<Brick> bricks;
 
-
-
-    public Level(World world, Stage stage) {
+    public Level(World world, Stage stage, boolean handleInput) {
 
         this.world = world;
         this.stage = stage;
+        this.handleInput = handleInput;
 
         PhysicsHelper.createWorldBorders(world);
 
@@ -44,19 +44,19 @@ public class Level {
         if (bricks == null) {
             bricks = new Array<>();
         }
-        for (int i = 0; i < Const.BRICK_ROWS; i++) {
-            for (int j = 0; j < Const.BRICK_COLUMNS; j++) {
+        for (int i = 0; i < Const.BRICK_COLUMNS; i++) {
+            for (int j = 0; j < Const.BRICK_ROWS; j++) {
                 Brick brick = new Brick(world);
                 bricks.add(brick);
                 brick.setHolder(bricks);
-                brick.createBody(new Vector2(i * (Const.CAMERA_WIDTH * 3 / 4) / Const.BRICK_COLUMNS + brick.getWidth() / 2, j * (Const.CAMERA_HEIGHT / 3) / Const.BRICK_ROWS - brick.getHeight() / 2 + HEIGHT_OFFSET));
+                brick.createBody(new Vector2(i * Const.CAMERA_WIDTH  / Const.BRICK_COLUMNS + brick.getWidth()/2 , j * (Const.CAMERA_HEIGHT / 3) / Const.BRICK_ROWS - brick.getHeight() / 2 + HEIGHT_OFFSET));
                 stage.addActor(brick);
             }
         }
     }
 
     private void addPaddle() {
-        paddle = new Paddle(world);
+        paddle = new Paddle(world, handleInput);
         paddle.createBody(new Vector2(Const.CAMERA_WIDTH / 2 - (paddle.getWidth() / 2) / Const.SCALE, paddle.getHeight() / 2));
         stage.addActor(paddle);
         GameManager.getInstance().setPaddle(paddle);

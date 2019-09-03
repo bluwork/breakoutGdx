@@ -9,11 +9,32 @@ import net.ltslab.games.breakoutgdx.BreakoutRLGame;
 import net.ltslab.games.breakoutgdx.actor.Paddle;
 import net.ltslab.games.breakoutgdx.util.GameUtils;
 
+import java.io.IOException;
+
 public class GameManager {
 
     private static final String TAG = "GameManager";
     private BreakoutRLGame game;
     private Paddle paddle;
+
+    public int getReward() {
+        return reward;
+    }
+
+    public void setReward(int reward) {
+        this.reward = reward;
+    }
+
+    public boolean isGameOver() {
+        return gameOver;
+    }
+
+    public void setGameOver(boolean gameOver) {
+        this.gameOver = gameOver;
+    }
+
+    private int reward;
+    private boolean gameOver;
     private GameManager() {}
 
     private static GameManager instance;
@@ -49,7 +70,7 @@ public class GameManager {
         getGame().getRemovedBodies().add(body);
     }
 
-    public void updatePaddleInput(byte lastAction) {
+    public void updatePaddleInput(int lastAction) {
 
         switch (lastAction) {
             case 0:
@@ -69,4 +90,12 @@ public class GameManager {
         }
 
     }
+
+    public void addToReward(int amount) {
+        reward += amount;
+    }
+    public byte[] getScreenSnapshot() {
+        return getGame().getLastSnapshot();
+    }
+
 }

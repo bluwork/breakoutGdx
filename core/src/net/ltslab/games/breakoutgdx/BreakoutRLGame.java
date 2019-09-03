@@ -27,12 +27,11 @@ import net.ltslab.games.breakoutgdx.helper.PhysicsHelper;
 import net.ltslab.games.breakoutgdx.management.GameManager;
 import net.ltslab.games.breakoutgdx.trainer.Communicator;
 import net.ltslab.games.breakoutgdx.util.Const;
-import net.ltslab.games.breakoutgdx.util.GrayscaleShader;
-
-import java.io.IOException;
+import net.ltslab.games.breakoutgdx.util.GameUtils;
 
 public class BreakoutRLGame extends ApplicationAdapter {
 
+    private static final String TAG = BreakoutRLGame.class.getSimpleName();
     private Stage stage;
     private Stage hudStage;
 
@@ -49,15 +48,19 @@ public class BreakoutRLGame extends ApplicationAdapter {
     private Array<Body> removedBodies;
     private boolean renderPhysics = true;
 
+    private long startTime;
+
+
     // UI elements
     Label scoreText;
+    private byte[] lastSnapshot;
 
     @Override
     public void create() {
 
         initialize();
 
-        level = new Level(world, stage);
+        level = new Level(world, stage, !training);
 
         Label.LabelStyle labelStyle = new Label.LabelStyle();
         labelStyle.font = new BitmapFont();
@@ -65,16 +68,12 @@ public class BreakoutRLGame extends ApplicationAdapter {
         scoreText.setAlignment(Align.top);
         Table table = new Table();
         table.setFillParent(true);
-        table.add(scoreText);
-
-        hudStage.addActor(table);
-
-        try {
-            communicator = new Communicator();
-        } catch (IOException e) {
-            e.printStackTrace();
+        if (!training) {
+            table.add(scoreText);
         }
 
+        hudStage.addActor(table);
+        communicator = new Communicator();
     }
 
     private void initialize() {
@@ -93,7 +92,10 @@ public class BreakoutRLGame extends ApplicationAdapter {
 
         // Initialize stages - one for game and one for HUD - UI elements
         stage = new Stage(new ExtendViewport(Const.CAMERA_WIDTH, Const.CAMERA_HEIGHT));
-        stage.getBatch().setShader(GrayscaleShader.grayscaleShader);
+        if (training) {
+            //stage.getBatch().setShader(GrayscaleShader.grayscaleShader);
+        }
+
         hudStage = new Stage(new ExtendViewport(Const.CAMERA_WIDTH * Const.SCALE, Const.CAMERA_HEIGHT * Const.SCALE));
 
     }
@@ -103,7 +105,12 @@ public class BreakoutRLGame extends ApplicationAdapter {
     @Override
     public void render() {
 
-        Gdx.gl.glClearColor(.5f, .5f, .5f, 1);
+        if (!training) {
+            Gdx.gl.glClearColor(.5f, .5f, .5f, 1);
+
+        } else {
+            Gdx.gl.glClearColor(0, 0, 1, 1);
+        }
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
         stage.act();
         stage.draw();
@@ -114,13 +121,10 @@ public class BreakoutRLGame extends ApplicationAdapter {
             clearBodies();
         }
 
-
         if (gameState == GameState.WAITING) {
 
-            if (communicator.needMoreTime()) {
-                communicator.update();
-            }
-            if (!started && Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
+
+            if (!started && Gdx.input.isKeyJustPressed(Input.Keys.SPACE) && !training) {
                 gameState = GameState.PLAYING;
                 start();
             }
@@ -128,23 +132,26 @@ public class BreakoutRLGame extends ApplicationAdapter {
 
         if (gameState == GameState.PLAYING) {
 
-            if (training) {
-                communicator.update();
+            PhysicsHelper.updatePhysicsStep(world, Gdx.graphics.getDeltaTime());
+            if ((System.currentTimeMillis() - startTime) > 45000) {
+                gameState = GameState.RESETTING;
             }
 
-            PhysicsHelper.updatePhysicsStep(world, Gdx.graphics.getDeltaTime());
-
-            if (renderPhysics) {
+            if (renderPhysics
+                    && !training
+            ) {
                 stage.getBatch().begin();
                 debugRenderer.render(world, stage.getCamera().combined);
                 stage.getBatch().end();
             }
+
         } else if (gameState == GameState.RESETTING) {
-                resetGame();
+            resetGame();
         }
 
-    }
+        lastSnapshot = GameUtils.takeNoAlphaSnapshot();
 
+    }
 
     private void clearBodies() {
 
@@ -173,7 +180,7 @@ public class BreakoutRLGame extends ApplicationAdapter {
     public void updateScore(int amount) {
         score += amount;
         scoreText.setText(score);
-        communicator.setReward(score);
+        GameManager.getInstance().setReward(score);
     }
 
     @Override
@@ -183,72 +190,54 @@ public class BreakoutRLGame extends ApplicationAdapter {
         world.dispose();
     }
 
-
     public void start() {
+        if (started) return;
+        GameManager.getInstance().setGameOver(false);
+        GameManager.getInstance().setReward(0);
+        startTime = System.currentTimeMillis();
         started = true;
-        communicator.setDone(false);
-        communicator.setReward(0);
         level.start();
-
+        gameState = GameState.PLAYING;
 
     }
-
 
     private int score;
     private Level level;
 
     public void onGameOver(boolean win) {
-        communicator.setDone(true);
+
         if (win) {
-            communicator.addToReward(score);
+            GameManager.getInstance().addToReward(10);
         } else {
-            communicator.addToReward(-100);
+            GameManager.getInstance().setReward(-10);
         }
-        communicator.update();
+        GameManager.getInstance().setGameOver(true);
         gameState = GameState.RESETTING;
 
-    }
 
+    }
 
     private void resetGame() {
-        started = false;
-        System.out.println("World is " + (world.isLocked() ? "locked" : "not locked") + ".");
 
-        if (!training) {
-            //showWinLose();
-        }
-
+        GameUtils.print(TAG, "World is " + (world.isLocked() ? "locked" : "not locked") + ".");
         started = false;
         level.reset();
-        //uploadAndResetScore();
         score = 0;
         scoreText.setText(score);
-
         gameState = GameState.WAITING;
-//        try {
-//            Thread.sleep(1000);
-//            gameState = GameState.PLAYING;
-//            start();
-//        } catch (InterruptedException e) {
-//            e.printStackTrace();
-//        }
-    }
-
-    private void showWinLose() {
-        throw (new UnsupportedOperationException("Implement Win Lose method"));
-    }
-
-    private void uploadAndResetScore() {
-        throw (new UnsupportedOperationException("Implement Upload And Reset method"));
     }
 
     public Array<Body> getRemovedBodies() {
         return removedBodies;
     }
 
+    public byte[] getLastSnapshot() {
+        return lastSnapshot;
+    }
+
     public enum GameState {
         PLAYING,
         RESETTING,
-        WAITING,
+        WAITING
     }
 }

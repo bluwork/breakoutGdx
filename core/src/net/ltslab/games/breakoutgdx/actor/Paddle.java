@@ -23,11 +23,13 @@ public class Paddle extends Actor {
     private Body body;
     private World world;
     private Vector2 initialPosition;
+    private boolean updateInput;
 
-    public Paddle(World world) {
+    public Paddle(World world, boolean updateInput) {
         image = new TextureRegion(new Texture(Gdx.files.internal("paddle.png")));
         setBounds(0, 0, image.getRegionWidth() / Const.SCALE, image.getRegionHeight() / Const.SCALE);
         this.world = world;
+        this.updateInput = updateInput;
     }
 
     public void createBody(Vector2 position) {
@@ -54,7 +56,9 @@ public class Paddle extends Actor {
 
     @Override
     public void draw(Batch batch, float parentAlpha) {
-        //handleInput();
+        if (updateInput) {
+            handleInput();
+        }
         update();
         Color color = getColor();
         batch.setColor(color.r, color.g, color.b, color.a * parentAlpha);
@@ -67,7 +71,7 @@ public class Paddle extends Actor {
         super.act(delta);
     }
 
-    private float movingSpeed = 3f;
+    private float movingSpeed = 10f;
 
     private void handleInput() {
         if (Gdx.input.isKeyPressed(Input.Keys.LEFT)) {

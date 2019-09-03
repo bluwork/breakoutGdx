@@ -2,23 +2,22 @@
  * Copyright (c) 2019. BLoo
  */
 
-package net.ltslab.stepdata;
+package net.ltslab.games.breakoutgdx.trainer;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 
 public class StepData implements Serializable {
-    private ArrayList<byte[]> frames;
+    private byte[] lastFrame;
     private int reward;
     private boolean done;
     private String info;
 
-    public ArrayList<byte[]> getFrames() {
-        return frames;
+    public byte[] getLastFrame() {
+        return lastFrame;
     }
 
-    public void setFrames(ArrayList<byte[]> frames) {
-        this.frames = frames;
+    public void setLastFrame(byte[] frame) {
+        this.lastFrame = frame;
     }
 
     public int getReward() {
@@ -43,5 +42,10 @@ public class StepData implements Serializable {
 
     public void setInfo(String info) {
         this.info = info;
+    }
+
+    @Override
+    public String toString() {
+        return "Reward: " + reward + " GameOver: " + (isDone()? " yes ": " no ");
     }
 }
