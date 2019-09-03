@@ -4,11 +4,11 @@
 
 package net.ltslab.games.breakoutgdx.trainer;
 
-import com.badlogic.gdx.Gdx;
 import com.google.gson.Gson;
 import net.ltslab.games.breakoutgdx.management.GameManager;
 import net.ltslab.games.breakoutgdx.util.Const;
 import net.ltslab.games.breakoutgdx.util.GameUtils;
+
 import java.util.concurrent.Executors;
 
 import static spark.Spark.*;
@@ -16,6 +16,7 @@ import static spark.Spark.*;
 public class Communicator{
 
     private final static String TAG = Communicator.class.getSimpleName();
+    private int stepCounter;
 
     public Communicator(){
         this(Const.DEFAULT_PORT);
@@ -24,6 +25,7 @@ public class Communicator{
     public Communicator(int port) {
 
         Executors.newSingleThreadExecutor().execute(new StepListener());
+        stepCounter = 0;
 
     }
 
@@ -42,6 +44,7 @@ public class Communicator{
         }
     @Override
     public void run() {
+
         get("/hello", (req, res) -> "Hello World");
         get("/step/:action", (request, response) -> {
             int action = Integer.parseInt(request.params(":action"));

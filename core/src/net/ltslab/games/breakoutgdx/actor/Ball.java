@@ -14,6 +14,7 @@ import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.*;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import net.ltslab.games.breakoutgdx.helper.BodyData;
+import net.ltslab.games.breakoutgdx.management.GameManager;
 import net.ltslab.games.breakoutgdx.util.Const;
 import net.ltslab.games.breakoutgdx.util.GameUtils;
 
@@ -95,6 +96,14 @@ public class Ball extends Actor {
         setRotation(body.getAngle()* MathUtils.radiansToDegrees);
 
         setPosition(position.x - getWidth()/2, position.y - getHeight()/2);
+
+        // TODO If ball is out world, call game over
+        if (body.getPosition().x < -2 ||
+                body.getPosition().x > Const.CAMERA_WIDTH + 2  ||
+                body.getPosition().y < -2 ||
+                body.getPosition().y > Const.CAMERA_HEIGHT + 2) {
+            GameManager.getInstance().setGameOver(true);
+        }
 
     }
 

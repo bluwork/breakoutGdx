@@ -130,7 +130,7 @@ public class BreakoutRLGame extends ApplicationAdapter {
         if (gameState == GameState.PLAYING) {
 
             PhysicsHelper.updatePhysicsStep(world, Gdx.graphics.getDeltaTime());
-            if ((System.currentTimeMillis() - startTime) > 30000 && !GameManager.getInstance().isGameOver()) {
+            if ((System.currentTimeMillis() - startTime) > 30000) {
                     startTime = System.currentTimeMillis();
                     GameManager.getInstance().setGameOver(true);
             }
