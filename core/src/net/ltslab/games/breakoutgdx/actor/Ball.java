@@ -15,16 +15,16 @@ import com.badlogic.gdx.physics.box2d.*;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import net.ltslab.games.breakoutgdx.helper.BodyData;
 import net.ltslab.games.breakoutgdx.util.Const;
+import net.ltslab.games.breakoutgdx.util.GameUtils;
 
 public class Ball extends Actor {
 
+    private static final String TAG = "Ball";
+
     TextureRegion ballImage;
     private boolean canAct;
-    private float speed = 100;
 
     private World world;
-
-    private Paddle paddle;
 
     private Body body;
 
@@ -34,7 +34,6 @@ public class Ball extends Actor {
 
         ballImage = new TextureRegion(new Texture(Gdx.files.internal("ball.png")));
         setBounds(0, 0, ballImage.getRegionWidth()/ Const.SCALE, ballImage.getRegionHeight()/Const.SCALE);
-        this.paddle = paddle;
         this.world = world;
     }
 
@@ -70,13 +69,14 @@ public class Ball extends Actor {
     public void start() {
         canAct = true;
         body.setLinearVelocity(5 , 5);
+        GameUtils.print(TAG, "Ball started.");
+        update();
     }
 
     public void stopAndReset() {
         canAct = false;
         body.setLinearVelocity(0 , 0);
         body.setTransform(initialPosition, body.getAngle());
-
         update();
     }
 

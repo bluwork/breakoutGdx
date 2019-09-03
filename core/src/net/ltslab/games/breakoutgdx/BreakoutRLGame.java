@@ -100,8 +100,6 @@ public class BreakoutRLGame extends ApplicationAdapter {
 
     }
 
-    private boolean started;
-
     @Override
     public void render() {
 
@@ -123,8 +121,7 @@ public class BreakoutRLGame extends ApplicationAdapter {
 
         if (gameState == GameState.WAITING) {
 
-
-            if (!started && Gdx.input.isKeyJustPressed(Input.Keys.SPACE) && !training) {
+            if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE) && !training) {
                 gameState = GameState.PLAYING;
                 start();
             }
@@ -133,8 +130,9 @@ public class BreakoutRLGame extends ApplicationAdapter {
         if (gameState == GameState.PLAYING) {
 
             PhysicsHelper.updatePhysicsStep(world, Gdx.graphics.getDeltaTime());
-            if ((System.currentTimeMillis() - startTime) > 45000) {
-                gameState = GameState.RESETTING;
+            if ((System.currentTimeMillis() - startTime) > 30000 && !GameManager.getInstance().isGameOver()) {
+                    startTime = System.currentTimeMillis();
+                    GameManager.getInstance().setGameOver(true);
             }
 
             if (renderPhysics
@@ -145,7 +143,8 @@ public class BreakoutRLGame extends ApplicationAdapter {
                 stage.getBatch().end();
             }
 
-        } else if (gameState == GameState.RESETTING) {
+        }
+        if (gameState == GameState.RESETTING) {
             resetGame();
         }
 
@@ -191,13 +190,14 @@ public class BreakoutRLGame extends ApplicationAdapter {
     }
 
     public void start() {
-        if (started) return;
+
+        GameUtils.print(TAG, "Start called");
         GameManager.getInstance().setGameOver(false);
         GameManager.getInstance().setReward(0);
         startTime = System.currentTimeMillis();
-        started = true;
         level.start();
         gameState = GameState.PLAYING;
+
 
     }
 
@@ -220,7 +220,6 @@ public class BreakoutRLGame extends ApplicationAdapter {
     private void resetGame() {
 
         GameUtils.print(TAG, "World is " + (world.isLocked() ? "locked" : "not locked") + ".");
-        started = false;
         level.reset();
         score = 0;
         scoreText.setText(score);

@@ -53,6 +53,7 @@ public class Communicator{
         });
         get("/reset", (request, response) -> {
 
+
             GameUtils.print(TAG, "Reset");
             response.status(200);
             response.type("application/json");
