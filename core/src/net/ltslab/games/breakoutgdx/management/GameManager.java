@@ -98,4 +98,8 @@ public class GameManager {
         return getGame().getLastSnapshot();
     }
 
+    public long getElapsedTime() {
+        return getGame().getElapsedTime();
+    }
+
 }

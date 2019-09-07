@@ -59,6 +59,7 @@ project(":core") {
         api "com.badlogicgames.gdx:gdx-box2d:$gdxVersion"
         api "com.google.code.gson:gson:2.8.5"
         api 'com.sparkjava:spark-core:2.3'
+        api 'org.knowm.xchart:xchart:3.5.4'
         
     }
 }

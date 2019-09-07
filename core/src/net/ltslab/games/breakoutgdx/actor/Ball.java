@@ -70,7 +70,7 @@ public class Ball extends Actor {
     public void start() {
         canAct = true;
         body.setLinearVelocity(5 , 5);
-        GameUtils.print(TAG, "Ball started.");
+        //GameUtils.print(TAG, "Ball started.");
         update();
     }
 
@@ -102,7 +102,10 @@ public class Ball extends Actor {
                 body.getPosition().x > Const.CAMERA_WIDTH + 2  ||
                 body.getPosition().y < -2 ||
                 body.getPosition().y > Const.CAMERA_HEIGHT + 2) {
-            GameManager.getInstance().setGameOver(true);
+            if (!GameManager.getInstance().isGameOver()) {
+                canAct = false;
+                GameManager.getInstance().getGame().onGameOver(false);
+            }
         }
 
     }

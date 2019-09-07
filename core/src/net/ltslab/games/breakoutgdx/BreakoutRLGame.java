@@ -26,8 +26,11 @@ import net.ltslab.games.breakoutgdx.helper.CollisionListener;
 import net.ltslab.games.breakoutgdx.helper.PhysicsHelper;
 import net.ltslab.games.breakoutgdx.management.GameManager;
 import net.ltslab.games.breakoutgdx.trainer.Communicator;
+import net.ltslab.games.breakoutgdx.trainer.RealtimeChart;
 import net.ltslab.games.breakoutgdx.util.Const;
 import net.ltslab.games.breakoutgdx.util.GameUtils;
+
+import java.util.ArrayList;
 
 public class BreakoutRLGame extends ApplicationAdapter {
 
@@ -131,8 +134,9 @@ public class BreakoutRLGame extends ApplicationAdapter {
 
             PhysicsHelper.updatePhysicsStep(world, Gdx.graphics.getDeltaTime());
             if ((System.currentTimeMillis() - startTime) > 30000) {
-                    startTime = System.currentTimeMillis();
-                    GameManager.getInstance().setGameOver(true);
+                onGameOver(false);
+                startTime = System.currentTimeMillis();
+
             }
 
             if (renderPhysics
@@ -191,7 +195,7 @@ public class BreakoutRLGame extends ApplicationAdapter {
 
     public void start() {
 
-        GameUtils.print(TAG, "Start called");
+        //GameUtils.print(TAG, "Start called");
         GameManager.getInstance().setGameOver(false);
         GameManager.getInstance().setReward(0);
         startTime = System.currentTimeMillis();
@@ -203,23 +207,42 @@ public class BreakoutRLGame extends ApplicationAdapter {
 
     private int score;
     private Level level;
+    private int episodeCounter;
+    private int bestScore;
+    private int bestEpisode;
+
+    private RealtimeChart chart = new RealtimeChart();
 
     public void onGameOver(boolean win) {
 
         if (win) {
             GameManager.getInstance().addToReward(10);
         } else {
-            GameManager.getInstance().setReward(-10);
+            GameManager.getInstance().setReward(-1);
         }
+        if (score > bestScore) {
+            bestScore = score;
+            bestEpisode = episodeCounter;
+        }
+
+        if (episodeCounter > 0) {
+            GameUtils.print(TAG, "Episode:", episodeCounter, "duration:", getElapsedTime(), "s", " Score:", score, "Best Score:", bestScore, "Best Episode:", bestEpisode);
+            chart.updateChart(episodeCounter, score);
+        }
+        episodeCounter++;
         GameManager.getInstance().setGameOver(true);
         gameState = GameState.RESETTING;
 
 
     }
 
+    public long getElapsedTime() {
+        return (System.currentTimeMillis() - startTime) / 1000;
+    }
+
     private void resetGame() {
 
-        GameUtils.print(TAG, "World is " + (world.isLocked() ? "locked" : "not locked") + ".");
+        //GameUtils.print(TAG, "World is " + (world.isLocked() ? "locked" : "not locked") + ".");
         level.reset();
         score = 0;
         scoreText.setText(score);
