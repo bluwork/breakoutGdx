@@ -59,7 +59,11 @@ public class GameManager {
     }
 
     public void gameOver(boolean win) {
-        getGame().onGameOver(win);
+        try {
+            getGame().onGameOver(win);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public void updateScore(int amount) {

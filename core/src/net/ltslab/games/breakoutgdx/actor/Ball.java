@@ -18,6 +18,8 @@ import net.ltslab.games.breakoutgdx.management.GameManager;
 import net.ltslab.games.breakoutgdx.util.Const;
 import net.ltslab.games.breakoutgdx.util.GameUtils;
 
+import java.io.IOException;
+
 public class Ball extends Actor {
 
     private static final String TAG = "Ball";
@@ -104,7 +106,11 @@ public class Ball extends Actor {
                 body.getPosition().y > Const.CAMERA_HEIGHT + 2) {
             if (!GameManager.getInstance().isGameOver()) {
                 canAct = false;
-                GameManager.getInstance().getGame().onGameOver(false);
+                try {
+                    GameManager.getInstance().getGame().onGameOver(false);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
         }
 
